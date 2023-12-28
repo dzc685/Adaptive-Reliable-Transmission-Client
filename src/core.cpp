@@ -2146,7 +2146,7 @@ void CUDT::processCtrl(CPacket& ctrlpkt)
                secure = false;
                break;
             }
-
+            //todo 发送端在这里接收nack并且进行重传 这里或许不需要修改
             int num = 0;
             if (CSeqNo::seqcmp(losslist[i] & 0x7FFFFFFF, m_iSndLastAck) >= 0)
                num = m_pSndLossList->insert(losslist[i] & 0x7FFFFFFF, losslist[i + 1]);
@@ -2638,6 +2638,7 @@ void CUDT::checkTimers()
       {
          if ((CSeqNo::incseq(m_iSndCurrSeqNo) != m_iSndLastAck) && (m_pSndLossList->getLossLength() == 0))
          {
+            //todo 发送端在这里将超时的包填入丢失队列
             // resend all unacknowledged packets on timeout, but only if there is no packet in the loss list
             int32_t csn = m_iSndCurrSeqNo;
             int num = m_pSndLossList->insert(m_iSndLastAck, m_iSndLastAck + (csn - m_iSndLastAck));
