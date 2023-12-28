@@ -33,3 +33,20 @@
     ``udttunnel: cd client/app && ./udtclient``   
 - iperf3测试:  
     ``iperf3 -c 2.8.0.1``  
+
+
+- TC模拟网络环境：
+sudo tc qdisc del dev tun1 root 
+sudo tc qdisc add dev tun1 netem loss 10% rate 1mbit delay 10ms
+sudo tc qdisc replace dev tun1 netem
+
+sudo tc qdisc add dev enp0s8 netem loss 10%
+
+sudo tc qdisc del dev enp0s8 root
+sudo tc qdisc add dev enp0s8 root handle 1: htb default 10
+sudo tc class add dev enp0s8 parent 1: classid 1:10 htb rate 100mbit
+sudo tc qdisc add dev enp0s8 parent 1:10 handle 20: netem loss 20%
+
+- iperf3以kbits显示
+iperf -c 2.8.0.1 -f k
+-u 测量udp
