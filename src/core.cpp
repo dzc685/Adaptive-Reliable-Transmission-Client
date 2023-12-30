@@ -55,6 +55,8 @@ written by
 #include <cmath>
 #include <fstream>
 #include <sstream>
+#include <iostream>
+#include <random>
 #include "queue.h"
 #include "core.h"
 
@@ -2292,7 +2294,7 @@ int CUDT::packData(CPacket& packet, uint64_t& ts)
 
    // Loss retransmission always has higher priority.
    if ((packet.m_iSeqNo = m_pSndLossList->getLostSeq()) >= 0)
-   {
+   {//todo 添加一个重传窗口
       // protect m_iSndLastDataAck from updating by ACK processing
       CGuard ackguard(m_AckLock);
 
@@ -2636,17 +2638,35 @@ void CUDT::checkTimers()
       //TODO 
       if (m_pSndBuffer->getCurrBufSize() > 0)
       {
-         if ((CSeqNo::incseq(m_iSndCurrSeqNo) != m_iSndLastAck) && (m_pSndLossList->getLossLength() == 0))
-         {
-            //todo 发送端在这里将超时的包填入丢失队列
-            // resend all unacknowledged packets on timeout, but only if there is no packet in the loss list
-            int32_t csn = m_iSndCurrSeqNo;
-            int num = m_pSndLossList->insert(m_iSndLastAck, m_iSndLastAck + (csn - m_iSndLastAck));
-            // int num = m_pSndLossList->insert(m_iSndLastAck, m_iSndLastAck + 1 );
-            // m_pCC->m_dCWndSize += 1000;
+            
 
-            m_iTraceSndLoss += num;
-            m_iSndLossTotal += num;
+         if ((CSeqNo::incseq(m_iSndCurrSeqNo) != m_iSndLastAck) && (m_pSndLossList->getLossLength() == 0))
+         {//发送端检测到丢包，进入概率判断
+            
+            std::random_device rd;
+            std::mt19937 gen(rd());
+            std::uniform_int_distribution<int> dis(0, 99);
+
+            // 发送端检测超时省略计算丢包的概率
+            int probability = 0;
+
+            int random_number = dis(gen);
+            if (random_number < probability) {
+               std::cout << "发送端检测超时丢包，但是被省略" << std::endl;
+               
+            } else {
+               std::cout << "发送端检测超时丢包" << std::endl;
+               //todo 发送端在这里将超时的包填入丢失队列
+               // resend all unacknowledged packets on timeout, but only if there is no packet in the loss list
+               int32_t csn = m_iSndCurrSeqNo;
+               int num = m_pSndLossList->insert(m_iSndLastAck, m_iSndLastAck + (csn - m_iSndLastAck));
+               // int num = m_pSndLossList->insert(m_iSndLastAck, m_iSndLastAck + 1 );
+               // m_pCC->m_dCWndSize += 1000;
+
+               m_iTraceSndLoss += num;
+               m_iSndLossTotal += num;
+            }
+            
          }
 
          m_pCC->onTimeout();
