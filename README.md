@@ -50,3 +50,9 @@ sudo tc qdisc add dev enp0s8 parent 1:10 handle 20: netem loss 20%
 - iperf3以kbits显示
 iperf -c 2.8.0.1 -f k
 -u 测量udp
+
+sudo tc qdisc add dev tun2 root netem delay 100ms loss 1%
+sudo tc qdisc del dev tun2 root
+sudo tc qdisc add dev tun2 root netem delay 100ms loss 1% rate 1mbit
+sudo nmcli networking on
+sudo bash tctest.sh
